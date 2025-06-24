@@ -1,5 +1,4 @@
 const express = require('express');
-const { buffer } = require('micro');
 const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
@@ -7,13 +6,7 @@ require('dotenv').config();
 const app = express();
 
 // Stripe requires raw body for signature verification
-app.use(
-  express.json({
-    verify: (req, res, buf) => {
-      req.rawBody = buf;
-    },
-  })
-);
+app.use(express.raw({ type: 'application/json' }));
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const supabase = createClient(
@@ -27,7 +20,7 @@ app.post('/webhook', async (req, res) => {
   let event;
   try {
     event = stripe.webhooks.constructEvent(
-      req.rawBody,
+      req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
