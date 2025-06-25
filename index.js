@@ -72,3 +72,31 @@ app.get('/', (req, res) => res.send('🚀 Webhook server running.'));
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`🚀 Listening on port ${PORT}`));
+
+
+app.use(express.json()); // add this before your routes
+
+app.post('/create-checkout-session', async (req, res) => {
+  const { email } = req.body;
+
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    mode: 'payment',
+    customer_email: email, // ✅ THIS IS WHAT THE WEBHOOK NEEDS
+    line_items: [{
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: 'Premium Plan',
+        },
+        unit_amount: 999,
+      },
+      quantity: 1,
+    }],
+    success_url: 'https://your-site.com/success',
+    cancel_url: 'https://your-site.com/cancel',
+  });
+
+  res.json({ url: session.url });
+});
+
